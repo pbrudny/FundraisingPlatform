@@ -33,56 +33,56 @@ contract FundraisingPlatform is Ownable {
         _;
     }
 
-    function addClient(address client) external onlyOwner {
-        require(client != address(0), "Invalid client address");
-        clients[client] = true;
-        emit ClientAdded(client);
+    function addClient(address _client) external onlyOwner {
+        require(_client != address(0), "Invalid client address");
+        clients[_client] = true;
+        emit ClientAdded(_client);
     }
 
-    function createProject(string memory name, uint256 maxCapacity) external onlyClient {
-        require(maxCapacity > 0, "Invalid max capacity");
+    function createProject(string memory _name, uint256 _maxCapacity) external onlyClient {
+        require(_maxCapacity > 0, "Invalid max capacity");
 
         projectId++;
-        projects[projectId].name = name;
-        projects[projectId].maxCapacity = maxCapacity;
-        emit ProjectCreated(projectId, name, maxCapacity);
+        projects[projectId].name = _name;
+        projects[projectId].maxCapacity = _maxCapacity;
+        emit ProjectCreated(projectId, _name, _maxCapacity);
     }
 
-    function updateMaxCapacity(uint256 projectId, uint256 newMaxCapacity) external onlyClient {
-        require(projects[projectId].maxCapacity > 0, "Invalid project ID");
-        require(newMaxCapacity > 0, "Invalid max capacity");
+    function updateMaxCapacity(uint256 _projectId, uint256 _newMaxCapacity) external onlyClient {
+        require(projects[_projectId].maxCapacity > 0, "Invalid project ID");
+        require(_newMaxCapacity > 0, "Invalid max capacity");
 
-        projects[projectId].maxCapacity = newMaxCapacity;
-        emit MaxCapacityUpdated(projectId, newMaxCapacity);
+        projects[_projectId].maxCapacity = _newMaxCapacity;
+        emit MaxCapacityUpdated(_projectId, _newMaxCapacity);
     }
 
-    function addStableCoin(uint256 projectId, address stableCoin) external onlyClient {
-        require(projects[projectId].maxCapacity > 0, "Invalid project ID");
-        require(stableCoin != address(0), "Invalid stable coin address");
+    function addStableCoin(uint256 _projectId, address _stableCoin) external onlyClient {
+        require(projects[_projectId].maxCapacity > 0, "Invalid project ID");
+        require(_stableCoin != address(0), "Invalid stable coin address");
 
-        projects[projectId].acceptedStableCoins[stableCoin] = true;
+        projects[_projectId].acceptedStableCoins[_stableCoin] = true;
     }
 
-    function transferStableCoins(uint256 projectId, address stableCoin, uint256 amount) external {
-        require(projects[projectId].maxCapacity > 0, "Invalid project ID");
-        require(amount > 0, "Invalid transfer amount");
+    function transferStableCoins(uint256 _projectId, address _stableCoin, uint256 _amount) external {
+        require(projects[_projectId].maxCapacity > 0, "Invalid project ID");
+        require(_amount > 0, "Invalid transfer amount");
 
-        require(projects[projectId].acceptedStableCoins[stableCoin], "Invalid stable coin for the project");
+        require(projects[_projectId].acceptedStableCoins[_stableCoin], "Invalid stable coin for the project");
 
-        IERC20(stableCoin).safeTransferFrom(msg.sender, address(this), amount);
-        projects[projectId].investorTransfers[msg.sender] += amount;
-        emit StableCoinTransferred(projectId, msg.sender, stableCoin, amount);
+        IERC20(_stableCoin).safeTransferFrom(msg.sender, address(this), _amount);
+        projects[_projectId].investorTransfers[msg.sender] += _amount;
+        emit StableCoinTransferred(_projectId, msg.sender, _stableCoin, _amount);
     }
 
-    function transferFunds(uint256 projectId, address stableCoin, uint256 amount) external onlyClient {
-        require(projects[projectId].maxCapacity > 0, "Invalid project ID");
-        require(amount > 0, "Invalid transfer amount");
-        require(projects[projectId].investorTransfers[msg.sender] >= amount, "Insufficient funds");
+    function transferFunds(uint256 _projectId, address _stableCoin, uint256 _amount) external onlyClient {
+        require(projects[_projectId].maxCapacity > 0, "Invalid project ID");
+        require(_amount > 0, "Invalid transfer amount");
+        require(projects[_projectId].investorTransfers[msg.sender] >= _amount, "Insufficient funds");
 
-        require(projects[projectId].acceptedStableCoins[stableCoin], "Invalid stable coin for the project");
+        require(projects[_projectId].acceptedStableCoins[_stableCoin], "Invalid stable coin for the project");
 
-        IERC20(stableCoin).safeTransfer(msg.sender, amount);
-        projects[projectId].investorTransfers[msg.sender] -= amount;
-        emit FundsTransferred(projectId, msg.sender, stableCoin, amount);
+        IERC20(_stableCoin).safeTransfer(msg.sender, _amount);
+        projects[_projectId].investorTransfers[msg.sender] -= _amount;
+        emit FundsTransferred(_projectId, msg.sender, _stableCoin, _amount);
     }
 }
