@@ -5,13 +5,13 @@ pragma solidity ^0.8.0;
 import "./IERC20.sol";
 
 contract FundraisingPlatform {
-    address public owner; //for Presail
+    address public owner;
     uint256 public projectId;
 
     struct Project {
         string name;
-        uint256 maxCapacity; //that should be editable
-        address stableCoin; //we need stable coin address
+        uint256 maxCapacity;
+        address stableCoin; //we need stable coin address? Maybe we need multiple stable coins per project?
         mapping(address => uint256) investorTransfers;
     }
 
@@ -20,10 +20,11 @@ contract FundraisingPlatform {
 
     event ClientAdded(address client);
     event ProjectCreated(uint256 projectId, string name, uint256 maxCapacity, address stableCoin);
+    event MaxCapacityUpdated(uint256 projectId, uint256 newMaxCapacity);
     event StableCoinTransferred(uint256 projectId, address indexed investor, uint256 amount);
     event FundsTransferred(uint256 projectId, address indexed client, uint256 amount);
 
-    // TODO: maybe I should you ready function
+    // TODO: maybe I should use ready modifier
     modifier onlyOwner() {
         require(msg.sender == owner, "Only contract owner can perform this action");
         _;
@@ -34,7 +35,6 @@ contract FundraisingPlatform {
         _;
     }
 
-    //TODO: is that all we need/
     constructor() {
         owner = msg.sender;
     }
@@ -42,7 +42,7 @@ contract FundraisingPlatform {
     function addClient(address client) external onlyOwner {
         require(client != address(0), "Invalid client address");
         require(!clients[client], "Client already exists");
-        clients[client] = true; // this way is
+        clients[client] = true; // this way it is cheaper to check clients
         emit ClientAdded(client);
     }
 
@@ -59,13 +59,26 @@ contract FundraisingPlatform {
         emit ProjectCreated(projectId, name, maxCapacity, stableCoin);
     }
 
-    // TODO: make sure that only proper client could do actions
+    // allow client to update max capacity
+    function updateMaxCapacity(uint256 projectId, uint256 newMaxCapacity) external onlyClient {
+        //make sure the projectId is correct
+        require(projects[projectId].stableCoin != address(0), "Invalid project ID");
+        require(newMaxCapacity > 0, "Invalid max capacity");
+
+        projects[projectId].maxCapacity = newMaxCapacity;
+        emit MaxCapacityUpdated(projectId, newMaxCapacity);
+    }
+
     function transferStableCoins(uint256 projectId, uint256 amount) external {
         require(projects[projectId].stableCoin != address(0), "Invalid project ID");
         require(amount > 0, "Invalid transfer amount");
 
         IERC20 stableCoinToken = IERC20(projects[projectId].stableCoin);
+
+        // to do the real transfer on stablecoin
         stableCoinToken.transferFrom(msg.sender, address(this), amount);
+
+        //to keep track of investments
         projects[projectId].investorTransfers[msg.sender] += amount;
         emit StableCoinTransferred(projectId, msg.sender, amount);
     }
