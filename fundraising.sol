@@ -28,7 +28,11 @@ contract FundraisingPlatform is Ownable {
 
     constructor() {}
 
-    // Assumptions that we only add clients and clients could create projects themselves
+    modifier onlyClient() {
+        require(clients[msg.sender], "Only authorized clients can perform this action");
+        _;
+    }
+
     function addClient(address client) external onlyOwner {
         require(client != address(0), "Invalid client address");
         clients[client] = true;
@@ -39,7 +43,8 @@ contract FundraisingPlatform is Ownable {
         require(maxCapacity > 0, "Invalid max capacity");
 
         projectId++;
-        projects[projectId] = Project(name, maxCapacity);
+        projects[projectId].name = name;
+        projects[projectId].maxCapacity = maxCapacity;
         emit ProjectCreated(projectId, name, maxCapacity);
     }
 
@@ -79,9 +84,5 @@ contract FundraisingPlatform is Ownable {
         IERC20(stableCoin).safeTransfer(msg.sender, amount);
         projects[projectId].investorTransfers[msg.sender] -= amount;
         emit FundsTransferred(projectId, msg.sender, stableCoin, amount);
-    }
-
-    function onlyClient() internal view {
-        require(clients[msg.sender], "Only authorized clients can perform this action");
     }
 }
