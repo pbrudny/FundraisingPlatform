@@ -76,6 +76,7 @@ contract FundraisingPlatform {
         IERC20 stableCoinToken = IERC20(projects[projectId].stableCoin);
 
         // to do the real transfer on stablecoin
+        // so that fundraising contract address gets funds
         stableCoinToken.transferFrom(msg.sender, address(this), amount);
 
         //to keep track of investments
@@ -83,13 +84,17 @@ contract FundraisingPlatform {
         emit StableCoinTransferred(projectId, msg.sender, amount);
     }
 
+    // what is that function for?
     function transferFunds(uint256 projectId, uint256 amount) external onlyClient {
         require(projects[projectId].stableCoin != address(0), "Invalid project ID");
         require(amount > 0, "Invalid transfer amount");
         require(projects[projectId].investorTransfers[msg.sender] >= amount, "Insufficient funds");
 
         IERC20 stableCoinToken = IERC20(projects[projectId].stableCoin);
+        // client transfer coins from smart-contract account to his own
         stableCoinToken.transfer(msg.sender, amount);
+
+        //it has to update the state of funds for given client's project
         projects[projectId].investorTransfers[msg.sender] -= amount;
         emit FundsTransferred(projectId, msg.sender, amount);
     }
